@@ -1,44 +1,38 @@
-name: Pruebas de Navegador con Chrome
+name: Desplegar Escritorio Web
 
-on: [push]
+on:
+  push:
+    branches: ["main"]
+  schedule:
+    - cron: '0 * * * *' # Se ejecuta automáticamente cada hora
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
-  test-navegador:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps: deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-
     steps:
-      - name: Descargar código
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # Comprobar si Chrome ya está en el sistema (por defecto viene preinstalado en GitHub Actions)
-      - name: Verificar o instalar Chrome Nativo
-        run: |
-          if ! command -v google-chrome &> /dev/null
-          then
-              echo "Chrome no encontrado. Instalando paquete directo..."
-              sudo apt-get update
-              sudo apt-get install -y chromium-browser
-          else
-              echo "Google Chrome ya está preinstalado en este entorno de GitHub."
-          fi
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
 
-      # Configura la simulación de pantalla y audio requerida por el navegador
-      - name: Configurar pantalla y audio virtual para pruebas
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb alsa-utils
-          Xvfb :99 -screen 0 1280x1024x24 &
-          echo "DISPLAY=:99" >> $GITHUB_ENV
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.' # Sube los archivos de la raíz
 
-      # Ejecuta una prueba automatizada para confirmar que el navegador responde correctamente
-      - name: Verificar ejecución del navegador
-        run: |
-          if command -v google-chrome &> /dev/null; then
-            google-chrome --version
-            echo "Ejecutando prueba de renderizado con Google Chrome..."
-            google-chrome --headless --disable-gpu --dump-dom https://google.com
-          else
-            chromium-browser --version
-            echo "Ejecutando prueba de renderizado con Chromium..."
-            chromium-browser --headless --disable-gpu --dump-dom https://google.com
-          fi
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,10 +1,8 @@
-name: Desplegar Escritorio Web
+name: Desplegar Escritorio Virtual Con Audio
 
 on:
   push:
-    branches: ["main"]
-  schedule:
-    - cron: '0 * * * *' # Se ejecuta automáticamente cada hora
+    branches: ["main"] # Se activa cada vez que subes archivos a la rama principal
 
 permissions:
   contents: read
@@ -19,20 +17,20 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps: deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Descargar archivos del repositorio
         uses: actions/checkout@v4
 
-      - name: Setup Pages
+      - name: Configurar Entorno Web de Servidores
         uses: actions/configure-pages@v4
 
-      - name: Upload Artifact
+      - name: Empaquetar el Escritorio
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.' # Sube los archivos de la raíz
+          path: '.' # Empaqueta todos los archivos de la raíz
 
-      - name: Deploy to GitHub Pages
+      - name: Lanzar la web a Producción
         id: deployment
         uses: actions/deploy-pages@v4

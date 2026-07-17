@@ -10,30 +10,35 @@ jobs:
       - name: Descargar código
         uses: actions/checkout@v4
 
-      # Descarga la llave e instala Chrome usando el método moderno compatible con Ubuntu
-      - name: Instalar Google Chrome Estable
+      # Comprobar si Chrome ya está en el sistema (por defecto viene preinstalado en GitHub Actions)
+      - name: Verificar o instalar Chrome Nativo
         run: |
-          sudo apt-get update
-          sudo apt-get install -y wget curl gnupg
-          # Descarga e instala la firma digital de forma segura
-          sudo mkdir -p /etc/apt/keyrings
-          curl -fSsL https://google.com | sudo gpg --dearmor --yes -o /etc/apt/keyrings/google-chrome.gpg
-          # Añade el repositorio oficial apuntando a la nueva llave
-          echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://google.com stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
+          if ! command -v google-chrome &> /dev/null
+          then
+              echo "Chrome no encontrado. Instalando paquete directo..."
+              sudo apt-get update
+              sudo apt-get install -y chromium-browser
+          else
+              echo "Google Chrome ya está preinstalado en este entorno de GitHub."
+          fi
 
-      # Configura la simulación de pantalla y audio
+      # Configura la simulación de pantalla y audio requerida por el navegador
       - name: Configurar pantalla y audio virtual para pruebas
         run: |
+          sudo apt-get update
           sudo apt-get install -y xvfb alsa-utils
           Xvfb :99 -screen 0 1280x1024x24 &
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
-      # Verifica que el navegador se abra y funcione correctamente en la terminal
-      - name: Verificar instalación de Chrome
+      # Ejecuta una prueba automatizada para confirmar que el navegador responde correctamente
+      - name: Verificar ejecución del navegador
         run: |
-          echo "Google Chrome versión instalada:"
-          google-chrome --version
-          echo "Haciendo una prueba de carga rápida a Google:"
-          google-chrome --headless --disable-gpu --dump-dom https://google.com
+          if command -v google-chrome &> /dev/null; then
+            google-chrome --version
+            echo "Ejecutando prueba de renderizado con Google Chrome..."
+            google-chrome --headless --disable-gpu --dump-dom https://google.com
+          else
+            chromium-browser --version
+            echo "Ejecutando prueba de renderizado con Chromium..."
+            chromium-browser --headless --disable-gpu --dump-dom https://google.com
+          fi

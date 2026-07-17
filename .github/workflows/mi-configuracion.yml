@@ -10,28 +10,30 @@ jobs:
       - name: Descargar código
         uses: actions/checkout@v4
 
-      # Instalar Google Chrome de manera oficial en el servidor de GitHub
+      # Descarga la llave e instala Chrome usando el método moderno compatible con Ubuntu
       - name: Instalar Google Chrome Estable
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget gnupg
-          wget -q -O - https://google.com | sudo apt-key add -
-          sudo sh -c 'echo "deb [arch=amd64] http://google.com stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+          sudo apt-get install -y wget curl gnupg
+          # Descarga e instala la firma digital de forma segura
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fSsL https://google.com | sudo gpg --dearmor --yes -o /etc/apt/keyrings/google-chrome.gpg
+          # Añade el repositorio oficial apuntando a la nueva llave
+          echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://google.com stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
-      # Configurar un entorno gráfico y de audio virtual para que el software no falle
+      # Configura la simulación de pantalla y audio
       - name: Configurar pantalla y audio virtual para pruebas
         run: |
           sudo apt-get install -y xvfb alsa-utils
-          # Se inicia un monitor virtual en el fondo
           Xvfb :99 -screen 0 1280x1024x24 &
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
-      # Ejemplo de comando que usaría un desarrollador para ejecutar sus tests en Chrome
-      - name: Ejecutar comandos de prueba
+      # Verifica que el navegador se abra y funcione correctamente en la terminal
+      - name: Verificar instalación de Chrome
         run: |
           echo "Google Chrome versión instalada:"
           google-chrome --version
-          # Aquí los desarrolladores corren herramientas como Selenium, Puppeteer o Cypress
-          # Ejemplo: google-chrome --headless --disable-gpu --dump-dom https://google.com
+          echo "Haciendo una prueba de carga rápida a Google:"
+          google-chrome --headless --disable-gpu --dump-dom https://google.com

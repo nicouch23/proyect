@@ -1,0 +1,37 @@
+name: Pruebas de Navegador con Chrome
+
+on: [push]
+
+jobs:
+  test-navegador:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      # Instalar Google Chrome de manera oficial en el servidor de GitHub
+      - name: Instalar Google Chrome Estable
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -q -O - https://google.com | sudo apt-key add -
+          sudo sh -c 'echo "deb [arch=amd64] http://google.com stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      # Configurar un entorno gráfico y de audio virtual para que el software no falle
+      - name: Configurar pantalla y audio virtual para pruebas
+        run: |
+          sudo apt-get install -y xvfb alsa-utils
+          # Se inicia un monitor virtual en el fondo
+          Xvfb :99 -screen 0 1280x1024x24 &
+          echo "DISPLAY=:99" >> $GITHUB_ENV
+
+      # Ejemplo de comando que usaría un desarrollador para ejecutar sus tests en Chrome
+      - name: Ejecutar comandos de prueba
+        run: |
+          echo "Google Chrome versión instalada:"
+          google-chrome --version
+          # Aquí los desarrolladores corren herramientas como Selenium, Puppeteer o Cypress
+          # Ejemplo: google-chrome --headless --disable-gpu --dump-dom https://google.com

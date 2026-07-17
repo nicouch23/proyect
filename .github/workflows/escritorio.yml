@@ -1,0 +1,21 @@
+name: Escritorio Virtual Interactivo Remoto
+
+on:
+  workflow_dispatch: # Esto nos permite encender la computadora manualmente con un botón
+
+jobs:
+  run-desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Interfaz Grafica y Navegador
+        run: |
+          sudo apt-get update
+          # Instalamos un escritorio ligero (XFCE) y Firefox
+          sudo apt-get install -y xfce4 xfce4-goodies firefox xfce4-terminal
+          
+      - name: Conectar Pantalla Remota Interactiva
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 350 # La máquina se mantendrá viva casi 6 horas para que navegues
